@@ -1,0 +1,37 @@
+# copied from train.yaml
+defaults:
+  - _self_
+
+device: cuda
+seed: 0
+
+data_path: 
+  root: null  # the dir that contains label_buffer_xxx_yyy.pkl & label_buffer_statis.pkl & metadata.pkl
+  
+  file_pre_1: null
+  var_name_1: null
+  var_1: null
+  
+  file_pre_2: null
+  var_name_2: null
+  var_2: null
+
+  file_pre_3: null
+  var_name_3: null
+  var_3: null
+
+  file_end: null
+
+eval_itr: -1  # on which iteration's buffer that we BC on
+eval_thres: True
+
+model_update: 10000
+acc_target: 0.98
+
+eval_acc_thres_ls: null  # to leave a space for log
+num_eval_episodes: null
+
+# hydra configuration
+hydra:
+  run:
+    dir: ./exp_logs

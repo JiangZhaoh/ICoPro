@@ -1,0 +1,22 @@
+# modified from Christiano 2017
+obs_shape: ${agent.agent.model.obs_shape}
+action_dim: ${agent.agent.model.action_dim}
+nonlinearity: leakyRelu
+
+encoder_cfg:  # for default image shape (84, 84)
+  in_channels: null
+  channels: [16, 16, 16, 16]
+  kernel_sizes: [7, 5, 3, 3]
+  strides: [3, 2, 1, 1]
+  paddings: [2, 2, 1, 1]  # this part may be different with Christiano, they didn't specify this value
+  # nonlinearity: torch.nn.ReLU # Module, not Functional.
+  use_maxpool: False # if True: convs use stride 1, maxpool downsample.
+  dropout: 0.0  # 1D dropout
+  channel_dropout: 0.2  # 2D dropout, for channels (not sure which to choose in RLHF: 0.8 or 0.2)
+  norm_type: bn  # [null, bn]
+
+mlp_cfg:
+  hidden_depth: 1
+  hidden_dim: 64
+  dropout: 0.0  # 1D dropout
+  norm_type: null  # [null, bn], use null to set norm_type=None in code

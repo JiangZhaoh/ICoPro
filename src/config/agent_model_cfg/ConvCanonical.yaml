@@ -1,0 +1,26 @@
+obs_shape: ${agent.agent.model.obs_shape}
+action_dim: ${agent.agent.model.action_dim}
+
+encoder_cfg:  # for default image shape (84, 84)
+  is_mlp: False
+  in_channels: null
+  channels: [32, 64, 64]
+  kernel_sizes: [8, 4, 3]
+  strides: [4, 2, 1]
+  paddings: [0, 0, 0]
+  # nonlinearity: torch.nn.ReLU # Module, not Functional.
+  use_maxpool: False # if True: convs use stride 1, maxpool downsample.
+  dropout: 0.0
+
+mlp_cfg:
+  hidden_depth: 1  # TODO: try [1, 2, 3]
+  hidden_dim: 512  # TODO: try [256, 512, 1024]
+
+# in_channels: null
+# channels: [32, 64, 64]
+# kernel_sizes: [8, 4, 3]
+# strides: [4, 2, 1]
+# paddings: [0, 0, 0]
+# nonlinearity: torch.nn.ReLU # Module, not Functional.
+# use_maxpool: False # if True: convs use stride 1, maxpool downsample.
+# dropout: 0.0

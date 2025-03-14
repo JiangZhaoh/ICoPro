@@ -1,0 +1,46 @@
+# copied from train.yaml
+defaults:
+    - agent: rainbow
+    - env: atari_img
+    - agent_model_cfg: ConvDE
+    - finetune_cfg: CF_RLRND_Rainbow
+    - _self_
+
+# Basic setup
+device: cuda
+seed: 1
+
+# # sampler
+sampler_t: ${finetune_cfg.steps_per_itr}  # number of consecutive timesteps per sample collected
+sampler_b: 1  # number of sampling envs
+
+# training 
+num_env_steps: 100000  # 1M, total number of env steps (each env step = 4 env frames because frame_skip=4)
+# num_seed_steps: 5000
+# eval_frequency: 5000
+num_eval_episodes: 50
+
+# unsupervise
+# num_unsup_steps: 0
+# topK: 5
+# reset_update: 100
+
+# logger
+eval_freq: 1  # in terms of training itr
+eval_at_itr0: true
+log_save_tb: false  # tensorboard looks nice but costs too much memory
+agent_save_freq: -1  # besides saving models at the end of training, save models per agent_save_freq training itr
+# log_train_avg_step: 1000  # for train's log, averaged over this step
+save_eval_img: false
+save_eval_video:
+    flag: false
+    shape_h: 150  # (h, w) = (150, 600) is the shape for highway env; for Atari it's (w,h)=(160,210)
+    shape_w: 600
+    hz: 10
+
+# hydra configuration
+hydra:
+    job:
+        name: ${env.env_name}
+    run:
+        dir: ./exp_logs

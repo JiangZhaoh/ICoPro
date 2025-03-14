@@ -1,0 +1,8 @@
+env_name: pong
+obs_type: img  # choices: 'img', 'rom'; NOTE: default use grayscaled img
+frame_stack: 4
+clip_reward: true
+log_reward: False  # sign(raw reward)*log(1+|raw reward|)
+max_frames: 108000  # Max frames per episode = 108K
+terminal_on_life_loss: true  # TODO: should use true for pong?
+fire_on_reset: true  # TODO: test true or false

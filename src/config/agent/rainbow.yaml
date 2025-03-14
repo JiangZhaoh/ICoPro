@@ -1,0 +1,64 @@
+name: rainbow
+
+# use DERainbow's hyper-parameters
+
+agent:
+  _target_: new_utils.new_agent.rainbow_agent.CatDqnAgent
+  _recursive_: false  # avoid instantiating critic and actor automatically
+  ckpt_path: null  # both agent.model & agent.target_model will use this ckpt
+  n_atoms: 51
+  eps_init: 1.  # NOTE: with noisy=True, we shouldn't use epsilon-greedy, so need to set suitable eps-steps
+  eps_final: 0.
+  # eps_final_min: null  # Give < eps_final for vector epsilon.
+  # eps_itr_min: 50  # Algo may overwrite.
+  # eps_itr_max: 1000
+  eps_eval: 0.001
+  separate_tgt: False
+  model:
+    _target_: new_utils.new_agent.rainbow_model.AtariCatDqnModel
+    _recursive_: false  # avoid instantiating critic and actor automatically
+    # model_kwargs: null
+    obs_shape: null
+    action_dim: null
+    n_atoms: ${agent.agent.n_atoms}
+    dueling: true
+    noisy: true
+    noisy_std_init: 0.5
+    distributional: true
+    dqn_head_hidden_size: ${agent_model_cfg.mlp_cfg.hidden_dim}
+    conv_cfg: ${agent_model_cfg.encoder_cfg}
+    V_limit: ${agent.algo.V_max}
+
+algo:
+  _target_: new_utils.new_agent.rainbow_algo.CategoricalDQN
+  _recursive_: false  # avoid instantiating critic and actor automatically
+  distributional: ${agent.agent.model.distributional}
+  # From DQN
+  discount: 0.99
+  batch_size: 32  # batch size to train algo (not necessarily equal to sampler_t * sampler_b)
+  min_steps_learn: 1600
+  replay_size: ${num_env_steps}  # default to use unbounded replay buffer
+  obs_shape: null
+  replay_relabel_batch_size: 1024
+  replay_ratio: 32 # data_consumption / data_generation.
+  target_update_tau: 1.
+  target_update_interval: 2000 # 312 * 32 = 1e4 env steps.
+  n_step_return: 20
+  learning_rate: 0.0001
+  OptimCls: torch.optim.Adam
+  optim_kwargs:
+    eps: 0.00015
+  initial_optim_state_dict: null
+  clip_grad_norm: 10.  # i.e. mac gradient norm
+  eps_steps: 1601  # STILL IN ALGO (to convert to itr).
+  double_dqn: true
+  prioritized_replay: true
+  pri_alpha: 0.5  # priority exponent
+  pri_beta_init: 0.4
+  pri_beta_final: 1.
+  pri_beta_steps: ${num_env_steps}
+  delta_clip: 1.
+  V_max: 10.
+  r_hat_GT_coef: null
+  use_potential: null
+  # default_priority=None,

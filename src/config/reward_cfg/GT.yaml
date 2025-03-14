@@ -1,0 +1,9 @@
+type_name: GT
+
+r_hat_GT_coef: null
+use_potential:
+  flag: false
+  ahead: false
+  back: false
+traj_based:
+  flag: false

@@ -1,0 +1,12 @@
+obs_shape: null
+action_dim: null
+
+encoder_cfg:
+  is_mlp: True
+  input_size: null
+  hidden_size_1: 128
+  hidden_size_2: 128
+
+mlp_cfg:
+  hidden_depth: 1
+  hidden_dim: 128

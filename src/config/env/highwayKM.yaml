@@ -1,0 +1,51 @@
+env_name: highway  # [highway, highwayFast]
+lanes_count: 5
+vehicles_count: 40
+duration: 50  # [s]  # NOTE: length = 10000m
+render_mode: null # [null, 'human', rgb_array']
+policy_frequency: 1
+simulation_frequency: 5
+show_traj: False  # NOTE: if true, sometimes will have wrong print output for target_speed. But it doesn't matter, it's a meaningless setting when creating a copy of ego-vehicle
+vehicles_density: 1
+reward:
+  collision_reward: -1    # The reward received when colliding with a vehicle.
+  non_collision_reward: 0
+  right_lane_reward: 0.1  # The reward received when driving on the right-most lanes, linearly mapped to zero for other lanes.
+  high_speed_reward: 0.4  # The reward received when driving at full speed, linearly mapped to zero for lower speeds according to config["reward_speed_range"].
+  low_speed_reward: -0.1  # if the speed is lower than this speed
+  lane_change_reward: -0.05   # The reward received at each lane change action.
+  reward_speed_range:  # for highway's default vehicles, speed range is [-40, 30]
+    min: 21
+    max: 25
+  normalize_reward: True
+  normalize_reward_neg: True  # if normalize_reward==True: normalize_reward_neg==true -> [-1,1], normalize_reward_neg==false -> [0,1]
+# offroad_terminal: False
+obs:
+  # >>> env.observation_space
+  #     Box(low, high, shape, float32)
+  type: KM  # only Kinematics (KM) here
+  vehicles_count: 5  # Number of observed vehicles (1 ego + N-1 nearby vehicles)
+  features:  # default ["presence", "x", "y", "vx", "vy"]  (Names of features used in the observation)
+    cos_h: True  # Trigonometric heading of vehicle.
+    sin_h: True  # Trigonometric heading of vehicle.
+    heading: False  # Heading of vehicle in radians.
+    cos_d: False  # Trigonometric direction to the vehicle’s destination
+    sin_d: False  # Trigonometric direction to the vehicle’s destination
+    long_off: False  # Longitudinal offset to closest lane.
+    lat_off: False  # Lateral offset to closest lane.
+    ang_off: False  # Angular offset to closest lane.
+  absolute: False  # If absolute=False, the coordinates are relative to the ego-vehicle, except for the ego-vehicle which stays absolute.
+  ## some other configs that I think should keep the defaults
+  # order: sorted  # Order of observed vehicles. Values: sorted, shuffled
+  # normalize: True  # Should the observation be normalized
+  # clip: True  # Should the value be clipped in the desired range
+  # see_behind: False  # Should the observation contains the vehicles behind
+  # observe_intentions: False  # Observe the destinations of other vehicles
+  remove_frame_axis: True
+act:
+  type: DMeta  #  [DMeta, Disc] DMeta: DiscreteMetaAction, Disc: DiscreteAction
+  actions_per_axis: null  # If not None, act.type should be Disc and in [3,5,7,9]
+  target_speeds:
+    st: 19
+    ed: 30
+    cnt: 12  # For DMeta, the target_speed is np.linspace(min, max, cnt_speed)

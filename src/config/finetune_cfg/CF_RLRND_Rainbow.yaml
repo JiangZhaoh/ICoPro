@@ -1,0 +1,148 @@
+# Corrective Feedback
+type_name: CF
+model_update: 6000  # number of epochs every time updating the ft-Q model TODO: try [10, 50, 200]
+acc_target: 0.98
+max_segment: 1000000
+fb_schedule: 0  # 0: constant
+check_label: False
+steps_per_itr: 5000
+oracle:
+  exp_path: null  # directory to load trained agent as action oracle
+  ckpt_id: null
+  eps: 0.  # previous we use default eps_eval, which is 0.001
+noise_override: False  # if agent.agent.noisy==True, this flag is to enforce use_noise=noise_override for all modes (training/eval/sampling)
+log_q: False
+save_label_freq: -1  # [1, -1, null]: 1 means each, -1 means buffer at the end, null means do not save
+save_label_rewrite: True  # to save memory
+traj_collect:  # if using noisy net
+  mode: eval  # [eval, sample], will have difference when noisy_override=null
+  reset_noise_interval: 10
+eps_greedy:  # linear decay eps
+  flag: False
+  init_eps: 1
+  ed_eps: ${agent.agent.eps_eval}
+  eps_itr: null
+use_ft: True
+keep_all_data: True  # if this value is True, then RL_loss.fix_data_index=True or False is the same 
+SL_end_cfg:
+  flag: False
+  eval_thres: True
+  model_update: 10000
+  acc_target: 0.98
+  eval_acc_thres_ls: null  # to leave a space for log
+  log_SL: False # if true, then log grad & loss for the SL procedure
+  eval_SL0: False  # if true, then evaluate the initial agent when test SL
+finetune_model:
+  _target_: new_utils.finetune_models.corrective_ft_RLRND_rlpyt.CorrectiveRlpytFinetuneRLRNDModel
+  _recursive_: false  # avoid instantiating model automatically
+  B: ${sampler_b}
+  obs_shape: null
+  action_dim: null
+  OptimCls: torch.optim.Adam
+  optim_kwargs:
+    # eps: 0.00015
+    eps: null
+    weight_decay: 0
+  lr: 0.0001
+  query_batch: 128  # batch size for asking queries that need oracle/human to judge
+  train_batch_size: 128  # batch size for training reward model TODO: 128 is too slow, try larger values
+  size_segment: 25  # trajectory segments to be compared. NOTE: in PEBBLE they use 50, but in RLHF for Atari they use 25
+  cf_per_seg: 1  # corrective feedback per segment
+  query_recent_itr: 1  # sample queries from recently collected K iterations
+  max_size: null  # maximal number of timesteps in reward model's data buffer
+  label_capacity: null  # capacity for labeled query buffer (PEBBLE didn't tune this value, default 5e5; RLHF2017 use 3000)
+  device: ${device}
+  env_name: ${env.env_name}
+  loss_name: MargineLossDQfD  # ['Exp', 'MargineLossDQfD', 'MargineLossMin0Fix', 'PV']
+  clip_grad_norm: 50.
+  exp_loss_beta: 1.
+  loss_margine: 0.05
+  margine_decay:
+    flag: False
+    type: cosine  # ['cosine', 'linear']
+    min_loss_margine: 0.001
+  loss_square: False
+  loss_square_coef: 1.
+  oracle_type: oq  # oe-oracle_entropy, oq-oracle_q_diff, oqLRd-oracle_q_diff+Lreturn>Rreturn(-d discounted); hm: human
+  softmax_tau: 1.0  # For calculating action distribution based on oracle's Q
+  ckpt_path: null  # if not null, ckpt will be loaded from ckpts in this path
+  distributional: ${agent.agent.model.distributional}
+  log_path: null
+  log_q_path: null
+  total_itr: null
+  gamma: ${agent.algo.discount}
+  steps_per_itr: ${finetune_cfg.steps_per_itr}
+  reset_opt: True
+  ignore_small_qdiff:
+    flag: False
+    add_whole_seg: True  # if ignore_small_qdiff.flag==False, then if add_whole_seg=True, for segments with max q_diff==0, the whole segment'a action will be regarded as the label
+    thres: 0.
+  sampling_cfg:
+    seg_type: s  # 'u': uniform; 's': segment
+    sampling_type: uni  # 'uni': uniform; 'topq': topQDiff;
+    sample_multipler: null  # for seg_type=='u' and seg_sampling_type!='uni', that need extra filtering
+    uni_ratio: null  # [null, lin, lin[min_uni_ratio], cos, cos[min_uni_ratio], [constant value]]
+    uni_itr: 1  # for the first 'uni_itr' iteration, we use uniform sampling no matter what sampling_type we choose
+  use_ft: ${finetune_cfg.use_ft}
+  tgt_in_ft:  # NOTE: do not change those default configurations!! A lot of if-else conditions will be affected..
+    flag: False
+    # acc_test_thres: 0.98  # if you only want to log this test value, simply set this value to 1
+    # acc_test_include_new: True
+    st_itr: 8
+    bs_ratio: null  # if bs_ratio==null then the bs_ratio is decided automatically, according to the number of labels and 
+    data_recent_itr: 1
+    type: tlEqu  # [tgt, tlEqu]
+    dynamic_weight: False
+    acc_target: null
+    RL_epoch: null  # when ft_use_tgt=True, changing maximum RL epoch changed to this value
+    split_query: False
+    tgt_upadte_interval: null  # if null, then only update at ft_epoch==0; otherwise update when ft_epoch % tgt_upadte_interval == 0
+  RL_loss:
+    # TODO: tune the margine, since now we have the RL process, margine should relate to the reward scale we used
+    flag: True
+    use_reward: True
+    use_RLIF_reward: False
+    separate_opt: False  # according to my initial test on mac, use another opt can destroy the performance and hard to optimize
+    # one_step: True
+    one_step_weight: 1
+    n_step: 20
+    n_step_weight: 1
+    RL_recent_itr: 64
+    target_tau: 1  # for copying to target model
+    lr_ratio: 1  # if 'separate_opt'==True, use a special lr for it
+    train_bs_ratio: 1  # w.r.t finetune_model.train_batch_size (the batch_size used in ft-phase)
+    min_train_epoch: null
+    max_train_epoch: 1  # the maximum number of RL_finetune epoch (if stop_acc is not None, will stop early when reaching acc; if stop_acc is None, then this value func ).
+    stop_acc: null
+    fix_data_index: False
+    
+    # sl_type: tgt  # [tgt, utTgt, label, AL, tlEqu, tEAL, null]. tgt: a_E generated from target_model; label: a_E from label buffer; AL: all label; ALD: all label but set sl_weight automatically; null: no supervised loss; tlEqu: target generated label with true label replaced in corresponding position; tEAL: combine tlEqu and AL
+    human_label:
+      sl_weight: 1
+      bs_ratio: 1  # batch size ratio (based on RL training batch size)
+    tgt_label:
+      sl_weight: 0
+      type: tlEqu  # [tgt, tlEqu]
+      same_data_RL: True  # if same_data_RL is True, then require data_recent_itr == bs_ratio == None
+      same_data_RL_target: False
+      data_recent_itr: null
+      bs_ratio: null
+      RND_check:
+        filter: null  # [null, lmax]
+        # type: s  # [s, sa]
+        diff_w: 0.  # For states filtered out (i.e. with high RND value), assign them with a different loss weight
+    RND_label:
+      sl_weight: 0
+      same_data_RL: True  # if same_data_RL is True, then require data_recent_itr == bs_ratio == None
+      data_recent_itr: null
+      bs_ratio: null
+    
+    double_dqn: False
+    update_tgt_interval: 1  # if update_tgt_interval==1, then update target network for all RL_finetune; if it's a value > train_epoch, thenonly update at the first time
+    
+    separate_tgt: False  # if separate_tgt = True, then the target network to predict pseudo label is the different one with which calculate TD and n-step loss
+    separate_target_tau: ${finetune_cfg.finetune_model.RL_loss.target_tau}
+    separate_update_tgt_interval: null
+  top_qdiff_cfg:
+    type: null  # [null, sum, max, mmSum]
+  cf_random: 0.  # the ratio of randomly provided corrective actions

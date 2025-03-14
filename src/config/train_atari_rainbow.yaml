@@ -1,0 +1,47 @@
+# copied from train.yaml
+defaults:
+    - agent: rainbow
+    - env: atari_img
+    - agent_model_cfg: ConvDE
+    - reward_cfg: GT  # choices: [GT, CF_Rainbow, PEBBLEAtari_Rainbow]
+    - reward_model_cfg: ConvRLHF  # [ConvDE, ConvRLHF]
+    - _self_
+# To train with ROM, using:
+    # - env: atari_rom
+    # - atari_model_cfg: MLP
+
+# Basic setup
+device: cuda
+seed: 1
+
+# sampler
+sampler_t: 1  # number of consecutive timesteps per sample collected
+sampler_b: 1  # number of sampling envs
+
+# training 
+num_env_steps: 100000  # 1M, total number of env steps (each env step = 4 env frames because frame_skip=4)
+# replay_buffer_capacity: ${num_env_steps}
+# num_seed_steps: 5000
+# eval_frequency: 5000
+num_eval_episodes: 50
+
+# unsupervise
+# num_unsup_steps: 0
+# topK: 5
+# reset_update: 100
+
+# logger
+eval_frequency: 10000  # in terms of env steps
+eval_at_itr0: true
+log_save_tb: false  # tensorboard looks nice but costs too much memory
+agent_save_frequency: 2e5  # besides saving models at the end of training, save models per $agent_save_frequency steps
+log_train_avg_step: 1000  # for train's log, averaged over this step
+save_eval_img: false
+save_eval_video: False
+
+# hydra configuration
+hydra:
+    job:
+        name: ${env.env_name}
+    run:
+        dir: ./exp_logs

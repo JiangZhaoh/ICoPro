@@ -1,0 +1,22 @@
+# data efficient version CNN
+obs_shape: ${agent.agent.model.obs_shape}
+action_dim: ${agent.agent.model.action_dim}
+nonlinearity: leakyRelu
+
+encoder_cfg:  # for default image shape (84, 84)
+  in_channels: null
+  channels: [32, 64]
+  kernel_sizes: [5, 5]
+  strides: [5, 5]
+  paddings: [3, 1]
+  # nonlinearity: torch.nn.ReLU # Module, not Functional.
+  use_maxpool: False # if True: convs use stride 1, maxpool downsample.
+  dropout: 0.0
+  channel_dropout: 0.0  # 2D dropout, for channels
+  norm_type: null  # [null, bn]
+
+mlp_cfg:
+  hidden_depth: 1  # TODO: try [1, 2, 3]
+  hidden_dim: 256  # TODO: try [256, 512, 1024]
+  dropout: 0.0  # 1D dropout
+  norm_type: null  # [null, bn], use null to set norm_type=None in code
